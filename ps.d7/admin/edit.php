@@ -2,39 +2,40 @@
 
 use Bitrix\Main\Context;
 use Bitrix\Main\Event;
+use Bitrix\Main\EventResult;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Fields\ScalarField;
-use Ps\D7\ElementNotFoundException;
-use Ps\D7\EntityNotDefinedException;
-use Ps\D7\EntityNotFoundException;
+use Ps\D7\Exception\ElementNotFoundException;
+use Ps\D7\Exception\EntityNotDefinedException;
+use Ps\D7\Exception\EntityNotFoundException;
 use Ps\D7\Form\AdminForm;
 use Ps\D7\ORM\EntityTable;
 
 require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_before.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/prolog.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php';
 
 Loader::includeSharewareModule('ps.d7');
 
 $request = Context::getCurrent()->getRequest();
 
-$errors = [];
-$entityId = $request->get('ENTITY_ID');
-if (!$entityId) {
-    throw new EntityNotDefinedException('Не указана сущность');
-}
+try {
+    $entityId = $request->get('ENTITY_ID');
+    if (!$entityId) {
+        throw new EntityNotDefinedException('Не указана сущность');
+    }
 
-$row = EntityTable::getList([
-    'filter' => ['ID' => $entityId]
-])->fetch();
+    $row = EntityTable::getList([
+        'filter' => ['ID' => $entityId]
+    ])->fetch();
 
-if (!$row['ID']) {
-    throw new EntityNotFoundException('Сущность не найдена');
-}
+    if (!$row['ID']) {
+        throw new EntityNotFoundException('Сущность не найдена');
+    }
 
-$elementId = $request->get('ID');
+    $elementId = $request->get('ID');
 
-if (empty($errors)) {
     /** @var DataManager $class */
     $class = $row['ENTITY'];
 
@@ -56,58 +57,6 @@ if (empty($errors)) {
     $APPLICATION->SetTitle($elementId > 0 ? 'Редактирование элемента' : 'Добавление элемента');
 
     $formId = 'form_' . mb_strtolower($entity->getCode()) . '_edit';
-}
-
-require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php';
-
-if (!empty($errors)) {
-    CAdminMessage::ShowMessage(implode('<br />', $errors));
-} else {
-    $errorText = '';
-
-    if (
-        $request->isPost() &&
-        ($request->getPost('save') !== '' || $request->getPost('apply') !== '' || $request->getPost('save_and_add') !== '') &&
-        check_bitrix_sessid()
-    ) {
-        $ID = 0;
-        $values = $request->getPostList()->toArray();
-
-        if ($values['ID']) {
-            $ID = $values['ID'];
-            unset($values['ID']);
-        }
-
-        $allowedFields = array_keys($fields);
-        foreach ($values as $k => $value) {
-            if (!in_array($k, $allowedFields, false)) {
-                unset($values[$k]);
-            }
-        }
-
-        try {
-            if ($ID > 0) {
-                $el = $class::update($ID, $values);
-            } else {
-                $el = $class::add($values);
-            }
-        } catch (Exception $e) {
-        }
-        if ($el->isSuccess()) {
-            $redirect_url_list = '/bitrix/admin/ps_d7_admin.php?lang=' . LANG . '&ENTITY_ID=' . $entityId;
-            $redirect_url_edit = '/bitrix/admin/ps_d7_edit.php?lang=' . LANG . '&ENTITY_ID=' . $entityId;
-
-            if ($request->getPost('save') !== '') {
-                LocalRedirect($redirect_url_list);
-            } elseif ($request->getPost('apply') !== '') {
-                LocalRedirect($redirect_url_edit . '&ID=' . $el->getId() . '&' . $tabControl->ActiveTabParam());
-            } elseif ($request->getPost('save_and_add') !== '') {
-                LocalRedirect($redirect_url_edit . '&ID=0&' . $tabControl->ActiveTabParam());
-            }
-        } else {
-            $errorText = implode('<br />', $el->getErrorMessages());
-        }
-    }
 
     $menu = [];
 
@@ -131,10 +80,48 @@ if (!empty($errors)) {
     $context = new CAdminContextMenu($menu);
     $context->Show();
 
-    if ($errorText) {
-        $e = new CAdminException([['text' => $errorText]]);
-        $message = new CAdminMessage('Ошибка', $e);
-        echo $message->Show();
+    if (
+        $request->isPost() &&
+        ($request->getPost('save') !== '' || $request->getPost('apply') !== '' || $request->getPost('save_and_add') !== '') &&
+        check_bitrix_sessid()
+    ) {
+        $ID = 0;
+        $values = $request->getPostList()->toArray();
+
+        if ($values['ID']) {
+            $ID = $values['ID'];
+            unset($values['ID']);
+        }
+
+        $allowedFields = array_keys($fields);
+        foreach ($values as $k => $value) {
+            if (!in_array($k, $allowedFields, false)) {
+                unset($values[$k]);
+            }
+        }
+
+        if ($ID > 0) {
+            $el = $class::update($ID, $values);
+        } else {
+            $el = $class::add($values);
+        }
+
+        if ($el->isSuccess()) {
+            $redirect_url_list = '/bitrix/admin/ps_d7_admin.php?lang=' . LANG . '&ENTITY_ID=' . $entityId;
+            $redirect_url_edit = '/bitrix/admin/ps_d7_edit.php?lang=' . LANG . '&ENTITY_ID=' . $entityId;
+
+            if ($request->getPost('save') !== '') {
+                LocalRedirect($redirect_url_list);
+            } elseif ($request->getPost('apply') !== '') {
+                LocalRedirect($redirect_url_edit . '&ID=' . $el->getId() . '&' . $tabControl->ActiveTabParam());
+            } elseif ($request->getPost('save_and_add') !== '') {
+                LocalRedirect($redirect_url_edit . '&ID=0&' . $tabControl->ActiveTabParam());
+            }
+        } else {
+            $e = new CAdminException([['text' => implode('<br />', $el->getErrorMessages())]]);
+            $message = new CAdminMessage('Ошибка сохранения', $e);
+            echo $message->Show();
+        }
     }
 
     $tabs = [];
@@ -176,11 +163,13 @@ if (!empty($errors)) {
     $customEntity = [];
     if ($event->getResults()) {
         foreach ($event->getResults() as $eventResult) {
-            /** @var Event $parameters */
-            $parameters = $eventResult->getParameters();
+            if ($eventResult->getType() === EventResult::SUCCESS) {
+                /** @var Event $parameters */
+                $parameters = $eventResult->getParameters();
 
-            if (class_exists($parameters->getParameter('ENTITY')) && is_callable($parameters->getParameter('HANDLER'))) {
-                $customEntity[$parameters->getParameter('ENTITY')] = $parameters->getParameter('HANDLER');
+                if (class_exists($parameters['ENTITY']) && is_callable($parameters['HANDLER'])) {
+                    $customEntity[$parameters['ENTITY']] = $parameters['HANDLER'];
+                }
             }
         }
     }
@@ -196,9 +185,6 @@ if (!empty($errors)) {
                 call_user_func($customEntity[$class], $tabControl, $field, $value);
             } else {
                 switch ($class) {
-                    case 'Bitrix\Main\ORM\Fields\IntegerField':
-                        // todo:
-                        break;
                     case 'Bitrix\Main\ORM\Fields\EnumField':
                         // todo:
                         break;
@@ -225,15 +211,28 @@ if (!empty($errors)) {
                         // todo:
                         break;
                     case 'Ps\D7\Fields\D7EntityField':
+                        $event = new Event('ps.d7', 'registerEntities');
+                        $event->send();
+
                         $classes = [];
-                        foreach (get_declared_classes() as $class) {
-                            if (is_subclass_of($class, '\\Bitrix\\Main\\ORM\\Data\\DataManager')) {
-                                $classes[$class] = $class;
+                        if ($event->getResults()) {
+                            foreach ($event->getResults() as $eventResult) {
+                                if ($eventResult->getType() === EventResult::SUCCESS) {
+                                    foreach ($eventResult->getParameters() as $class) {
+                                        if (is_subclass_of($class, '\\Bitrix\\Main\\ORM\\Data\\DataManager')) {
+                                            $classes[] = $class;
+                                        }
+                                    }
+                                }
                             }
                         }
 
                         $tabControl->AddDropDownField($field->getName(), $field->getTitle(), $field->isRequired(),
                             $classes, $value);
+                        break;
+                    default:
+                        $tabControl->AddEditField($field->getName(), $field->getTitle(), $field->isRequired(), [],
+                            $value);
                         break;
                 }
             }
@@ -247,10 +246,14 @@ if (!empty($errors)) {
         'btnSave' => true,
         'btnApply' => true,
         'btnCancel' => true,
-        'back_url' => 'ps_d7_list.php?lang=' . LANGUAGE_ID,
+        'back_url' => 'ps_d7_list.php?lang=' . LANGUAGE_ID . '&ENTITY_ID=' . $entityId,
     ]);
 
     $tabControl->Show();
+} catch (Exception $exception) {
+    $e = new CAdminException([['text' => $exception->getMessage()]]);
+    $message = new CAdminMessage('Ошибка', $e);
+    echo $message->Show();
 }
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin.php';

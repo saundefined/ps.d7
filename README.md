@@ -1,8 +1,38 @@
 # Генератор админки
 
+## Зачем?
+
+Таблицы на D7 создаются практически в каждом проекте, но иногда необходимо реализовывать интерфейс для них.
+
+Чтобы не копипастить каждый раз из проекта в проект страницы в админке для управления таблицами и был создан модуль.
+
+## Подключение своей таблицы
+
+Чтобы модуль узнал про вашу таблицу D7, необходимо зарегистрировать обработчик
+
+```php
+<?php
+
+use Bitrix\Main\Event;
+use Bitrix\Main\EventManager;
+use Bitrix\Main\EventResult;
+
+$event = EventManager::getInstance();
+$event->addEventHandler('ps.d7', 'registerEntities', 'registerMyEntity');
+
+function registerMyEntity(Event $event) {
+    $event->addResult(new EventResult(EventResult::SUCCESS, [
+        // Классы всех сущностей, для которых нужно будет управление
+        Bitrix\Main\UserTable::class,
+    ]));
+
+    return $event;
+}
+```
+
 ## Кастомные поля
 
-Все поля должны наследоваться от ``Bitrix\Main\ORM\Fields\ScalarField``.
+Все поля должны наследовать ``Bitrix\Main\ORM\Fields\ScalarField``.
 
 Рассмотрим добавление кастомного поля ``D7EntityField``
 
@@ -65,16 +95,21 @@ class EntityTable extends DataManager
 ```php
 <?php
 
-$event = \Bitrix\Main\EventManager::getInstance();
+use Bitrix\Main\EventResult;
+use Bitrix\Main\EventManager;
+use Bitrix\Main\Event;
+
+$event = EventManager::getInstance();
 $event->addEventHandler('ps.d7', 'registerCustomField', 'registerCustomFieldHandler');
 
-function registerCustomFieldHandler(\Bitrix\Main\Event $event) {
-    
-    // Тип поля для которого устанавливаем кастомный обработчик
-    $event->setParameter('ENTITY', 'Ps\\D7\\Fields\\D7EntityField');
-    
-    // Функция для обработки
-    $event->setParameter('HANDLER', 'addEntityHandler');
+function registerCustomFieldHandler(Event $event) {
+    $event->addResult(new EventResult(EventResult::SUCCESS), [
+        // Тип поля для которого устанавливаем кастомный обработчик
+        'ENTITY' => 'Ps\\D7\\Fields\\D7EntityField',
+        
+        // Функция для обработки
+        'HANDLER' => 'addEntityHandler'
+    ]);
 
     return $event;
 }

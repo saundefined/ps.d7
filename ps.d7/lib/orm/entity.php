@@ -25,10 +25,12 @@ class EntityTable extends DataManager
 
                 new D7EntityField('ENTITY', [
                     'title' => 'Сущность',
+                    'required' => true,
                 ]),
 
                 new StringField('NAME', [
                     'title' => 'Наименование',
+                    'required' => true,
                 ]),
 
                 new IntegerField('SORT', [

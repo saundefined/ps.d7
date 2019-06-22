@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Main\Application;
+use Bitrix\Main\Db\SqlQueryException;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -59,14 +60,30 @@ class ps_d7 extends CModule
         $eventManager = EventManager::getInstance();
         $eventManager->registerEventHandler('main', 'OnBuildGlobalMenu', $this->MODULE_ID,
             '\\Ps\\D7\\Events\\UI', 'onGlobalMenu');
+        $eventManager->registerEventHandler($this->MODULE_ID, 'registerEntities', $this->MODULE_ID,
+            '\\Ps\\D7\\Events\\Entity', 'registerBaseEntity');
     }
 
     public function InstallDB() {
         Loader::includeSharewareModule($this->MODULE_ID);
 
         if (!Application::getConnection()->isTableExists('b_ps_d7_entities')) {
-            EntityTable::getEntity()->createDbTable();
+            try {
+                EntityTable::getEntity()->createDbTable();
+
+                EntityTable::add([
+                    'ENTITY' => 'Ps\\D7\\ORM\\EntityTable',
+                    'NAME' => 'Сущности',
+                    'SORT' => 100
+                ]);
+            } catch (Exception $e) {
+                global $APPLICATION;
+                $APPLICATION->ThrowException($e->getMessage());
+                return false;
+            }
         }
+
+        return true;
     }
 
     public function DoUninstall() {
@@ -85,11 +102,21 @@ class ps_d7 extends CModule
         $eventManager = EventManager::getInstance();
         $eventManager->unRegisterEventHandler('main', 'OnBuildGlobalMenu', $this->MODULE_ID,
             '\\Ps\\D7\\Events\\UI', 'onGlobalMenu');
+        $eventManager->unRegisterEventHandler($this->MODULE_ID, 'registerEntities', $this->MODULE_ID,
+            '\\Ps\\D7\\Events\\Entity', 'registerBaseEntity');
     }
 
     public function UnInstallDB() {
         if (Application::getConnection()->isTableExists('b_ps_d7_entities')) {
-            Application::getConnection()->dropTable('b_ps_d7_entities');
+            try {
+                Application::getConnection()->dropTable('b_ps_d7_entities');
+            } catch (SqlQueryException $e) {
+                global $APPLICATION;
+                $APPLICATION->ThrowException($e->getMessage());
+                return false;
+            }
         }
+
+        return true;
     }
 }

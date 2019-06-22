@@ -19,4 +19,10 @@ class AdminForm extends \CAdminForm
         ];
     }
 
+    function AddHiddenField($id, $value) {
+        $this->tabs[$this->tabIndex]['FIELDS'][$id] = [
+            'id' => $id,
+            'html' => '<input type="hidden" name="' . $id . '" value="' . $value . '">',
+        ];
+    }
 }

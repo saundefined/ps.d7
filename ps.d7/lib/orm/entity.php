@@ -6,6 +6,7 @@ use Bitrix\Main\Entity\DataManager;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\StringField;
 use Bitrix\Main\SystemException;
+use Ps\D7\Fields\D7EntityField;
 
 class EntityTable extends DataManager
 {
@@ -22,7 +23,7 @@ class EntityTable extends DataManager
                     'autocomplete' => true,
                 ]),
 
-                new StringField('ENTITY', [
+                new D7EntityField('ENTITY', [
                     'title' => 'Сущность',
                 ]),
 

@@ -35,6 +35,12 @@ class ps_d7 extends CModule
     }
 
     public function DoInstall() {
+        if (CheckVersion('17.0.11', ModuleManager::getVersion('main'))) {
+            global $APPLICATION;
+            $APPLICATION->ThrowException('Модуль main должен быть версии 17.0.11 или выше');
+            return false;
+        }
+
         $this->InstallFiles();
         $this->InstallEvents();
 

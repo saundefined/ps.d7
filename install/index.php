@@ -61,8 +61,8 @@ class ps_d7 extends CModule
         $eventManager = EventManager::getInstance();
         $eventManager->registerEventHandler('main', 'OnBuildGlobalMenu', $this->MODULE_ID,
             '\\Ps\\D7\\Events\\UI', 'onGlobalMenu');
-        $eventManager->registerEventHandler($this->MODULE_ID, 'registerEntities', $this->MODULE_ID,
-            '\\Ps\\D7\\Events\\Entity', 'registerBaseEntity');
+        $eventManager->registerEventHandler($this->MODULE_ID, 'onGetEntityList', $this->MODULE_ID,
+            '\\Ps\\D7\\Events\\Entity', 'onGetEntityList');
     }
 
     public function InstallDB() {
@@ -113,8 +113,8 @@ class ps_d7 extends CModule
         $eventManager = EventManager::getInstance();
         $eventManager->unRegisterEventHandler('main', 'OnBuildGlobalMenu', $this->MODULE_ID,
             '\\Ps\\D7\\Events\\UI', 'onGlobalMenu');
-        $eventManager->unRegisterEventHandler($this->MODULE_ID, 'registerEntities', $this->MODULE_ID,
-            '\\Ps\\D7\\Events\\Entity', 'registerBaseEntity');
+        $eventManager->unRegisterEventHandler($this->MODULE_ID, 'onGetEntityList', $this->MODULE_ID,
+            '\\Ps\\D7\\Events\\Entity', 'onGetEntityList');
     }
 
     public function UnInstallDB() {

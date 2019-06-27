@@ -24,19 +24,17 @@ use Bitrix\Main\EventManager;
 use Bitrix\Main\EventResult;
 
 $event = EventManager::getInstance();
-$event->addEventHandler('ps.d7', 'registerEntities', 'registerMyEntity');
+$event->addEventHandler('ps.d7', 'onGetEntityList', 'registerMyEntity');
 
-function registerMyEntity(Event $event) {
+function registerMyEntity() {
     // Если подключаете таблицу из стороннего модуля
     Loader::includeSharewareModule('ps.demo');
     
-    $event->addResult(new EventResult(EventResult::SUCCESS, [
+    return [
         // Классы всех сущностей, для которых нужно будет управление
-        Bitrix\Main\UserTable::class,
-        Ps\Demo\ORM\DemoTable::class,
-    ]));
-
-    return $event;
+        new Bitrix\Main\UserTable(),
+        new Ps\Demo\ORM\DemoTable(),
+    ];
 }
 ```
 
@@ -121,18 +119,12 @@ use Bitrix\Main\EventManager;
 use Bitrix\Main\Event;
 
 $event = EventManager::getInstance();
-$event->addEventHandler('ps.d7', 'registerCustomField', 'registerCustomFieldHandler');
+$event->addEventHandler('ps.d7', 'onGetCustomFields', 'registerCustomField');
 
-function registerCustomFieldHandler(Event $event) {
-    $event->addResult(new EventResult(EventResult::SUCCESS, [
-        // Тип поля для которого устанавливаем кастомный обработчик
-        'ENTITY' => 'Ps\\D7\\Fields\\D7EntityField',
-        
-        // Функция для обработки
-        'HANDLER' => 'addEntityHandler'
-    ]));
-
-    return $event;
+function registerCustomField() {
+    return [
+        'Ps\\D7\\Fields\\D7EntityField' => 'addEntityHandler'
+    ];
 }
 
 /**
@@ -159,9 +151,9 @@ function addEntityHandler($tabControl, $field, $value) {
 
 Модуль по умолчанию модифицирует следующие типы данных:
 
-``Bitrix\Main\ORM\Fields\BooleanField``
-``Bitrix\Main\ORM\Fields\DateField``
-``Bitrix\Main\ORM\Fields\DatetimeField``
+- ``Bitrix\Main\ORM\Fields\BooleanField``
+- ``Bitrix\Main\ORM\Fields\DateField``
+- ``Bitrix\Main\ORM\Fields\DatetimeField``
 
 ```php
 <?php

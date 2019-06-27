@@ -2,11 +2,9 @@
 
 namespace Ps\D7\Form;
 
-use Bitrix\Main\Event;
-use Bitrix\Main\EventResult;
+use Bitrix\Main\EventManager;
 use Bitrix\Main\ORM\Data\DataManager;
 use CLightHTMLEditor;
-use Ps\D7\Module;
 
 class AdminForm extends \CAdminForm
 {
@@ -33,20 +31,15 @@ class AdminForm extends \CAdminForm
     }
 
     function AddD7EntityField($id, $label, $value, $required = false) {
-        $event = new Event('ps.d7', 'registerEntities');
-        $event->send();
-
         $classes = [];
-        if ($event->getResults()) {
-            foreach ($event->getResults() as $eventResult) {
-                if ($eventResult->getType() === EventResult::SUCCESS) {
-                    foreach ($eventResult->getParameters() as $class) {
-                        Module::autoLoad($class);
 
-                        if (new $class instanceof DataManager) {
-                            $classes[$class] = $class;
-                        }
-                    }
+        $events = EventManager::getInstance()->findEventHandlers('ps.d7', 'onGetEntityList');
+        foreach ($events as $event) {
+            $result = (array)ExecuteModuleEventEx($event);
+            foreach ($result as $classObject) {
+                if ($classObject instanceof DataManager) {
+                    $class = get_class($classObject);
+                    $classes[$class] = $class;
                 }
             }
         }

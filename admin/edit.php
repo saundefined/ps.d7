@@ -1,8 +1,7 @@
 <?php
 
 use Bitrix\Main\Context;
-use Bitrix\Main\Event;
-use Bitrix\Main\EventResult;
+use Bitrix\Main\EventManager;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Data\DataManager;
@@ -187,19 +186,13 @@ try {
         $tabControl->AddHiddenField('ID', $elementId);
     }
 
-    $event = new Event('ps.d7', 'registerCustomField');
-    $event->send();
-
-    $customEntity = [];
-    if ($event->getResults()) {
-        foreach ($event->getResults() as $eventResult) {
-            if ($eventResult->getType() === EventResult::SUCCESS) {
-                /** @var Event $parameters */
-                $parameters = $eventResult->getParameters();
-
-                if (class_exists($parameters['ENTITY']) && is_callable($parameters['HANDLER'])) {
-                    $customEntity[$parameters['ENTITY']] = $parameters['HANDLER'];
-                }
+    $customFields = [];
+    $events = EventManager::getInstance()->findEventHandlers('ps.d7', 'onGetCustomFields');
+    foreach ($events as $event) {
+        $result = (array)ExecuteModuleEventEx($event);
+        foreach ($result as $class => $handler) {
+            if (class_exists($class) && is_callable($handler)) {
+                $customFields[$class] = $handler;
             }
         }
     }
@@ -211,8 +204,8 @@ try {
             $fieldClass = get_class($field);
             $value = $element[$field->getName()];
 
-            if ($customEntity[$fieldClass]) {
-                call_user_func($customEntity[$fieldClass], $tabControl, $field, $value);
+            if (isset($customFields[$fieldClass]) && is_callable($customFields[$fieldClass])) {
+                call_user_func($customFields[$fieldClass], $tabControl, $field, $value);
             } else {
                 switch ($fieldClass) {
                     case 'Bitrix\Main\ORM\Fields\EnumField':

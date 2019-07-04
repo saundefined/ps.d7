@@ -73,7 +73,7 @@ class ps_d7 extends CModule
                 EntityTable::getEntity()->createDbTable();
 
                 EntityTable::add([
-                    'ENTITY' => 'Ps\\D7\\ORM\\EntityTable',
+                    'ENTITY' => Ps\D7\ORM\EntityTable::class,
                     'NAME' => Loc::getMessage('PS_D7_ENTITIES'),
                     'SORT' => 100
                 ]);

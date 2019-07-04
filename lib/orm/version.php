@@ -33,6 +33,11 @@ class VersionTable extends DataManager
                     'required' => true,
                 ]),
 
+                new IntegerField('ELEMENT_ID', [
+                    'title' => 'Идентификатор элемента',
+                    'required' => true,
+                ]),
+
                 new DatetimeField('DATE', [
                     'title' => 'Дата',
                     'required' => true,

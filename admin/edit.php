@@ -5,16 +5,25 @@ use Bitrix\Main\EventManager;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Data\DataManager;
+use Bitrix\Main\ORM\Fields\BooleanField;
+use Bitrix\Main\ORM\Fields\DateField;
+use Bitrix\Main\ORM\Fields\DatetimeField;
+use Bitrix\Main\ORM\Fields\EnumField;
 use Bitrix\Main\ORM\Fields\ScalarField;
+use Bitrix\Main\ORM\Fields\StringField;
+use Bitrix\Main\ORM\Fields\TextField;
 use Ps\D7\Exception\ElementNotFoundException;
 use Ps\D7\Exception\EntityNotDefinedException;
 use Ps\D7\Exception\EntityNotFoundException;
 use Ps\D7\Field;
+use Ps\D7\Fields\D7EntityField;
+use Ps\D7\Fields\FileField;
 use Ps\D7\Form\AdminForm;
 use Ps\D7\History\History;
 use Ps\D7\Interfaces\Versioned;
 use Ps\D7\Module;
 use Ps\D7\ORM\EntityTable;
+use Ps\D7\ORM\VersionTable;
 
 require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_before.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/prolog.php';
@@ -121,7 +130,7 @@ try {
             $el = $class::add($values);
         }
 
-        if ($el->isSuccess() && (new $class instanceof Versioned)) {
+        if ($el->isSuccess() && class_exists($class) && (new $class instanceof Versioned)) {
             $history = new History($class, $el->getId());
             $history->addVersion($values, $element);
         }
@@ -152,7 +161,7 @@ try {
         'TITLE' => Loc::getMessage('PS_D7_EDIT_ELEMENT_TITLE')
     ];
 
-    if ($elementId > 0 && (new $class instanceof Versioned)) {
+    if ($elementId > 0 && class_exists($class) && (new $class instanceof Versioned)) {
         $tabs[] = [
             'DIV' => 'edit2',
             'TAB' => 'История изменений',
@@ -208,38 +217,38 @@ try {
                 call_user_func($customFields[$fieldClass], $tabControl, $field, $value);
             } else {
                 switch ($fieldClass) {
-                    case 'Bitrix\Main\ORM\Fields\EnumField':
+                    case EnumField::class:
                         $values = $field->getValues();
                         $values = array_combine(array_values($values), array_values($values));
 
                         $tabControl->AddDropDownField($field->getName(), $field->getTitle(), $field->isRequired(),
                             $values, $value);
                         break;
-                    case 'Bitrix\Main\ORM\Fields\BooleanField':
+                    case BooleanField::class:
                         $tabControl->AddCheckBoxField($field->getName(), $field->getTitle(), $field->isRequired(),
                             ['Y', 'N'], $value);
                         break;
-                    case 'Bitrix\Main\ORM\Fields\DateField':
+                    case DateField::class:
                         $tabControl->AddCalendarField($field->getName(), $field->getTitle(), $value,
                             $field->isRequired());
                         break;
-                    case 'Bitrix\Main\ORM\Fields\DatetimeField':
+                    case DatetimeField::class:
                         $tabControl->AddDateTimeField($field->getName(), $field->getTitle(), $value,
                             $field->isRequired());
                         break;
-                    case 'Bitrix\Main\ORM\Fields\TextField':
+                    case TextField::class:
                         $tabControl->AddLightEditorField($field->getName(), $field->getTitle(), $value,
                             $field->isRequired());
                         break;
-                    case 'Ps\D7\Fields\FileField':
+                    case FileField::class:
                         $tabControl->AddFileField($field->getName(), $field->getTitle(), $value, [],
                             $field->isRequired());
                         break;
-                    case 'Ps\D7\Fields\D7EntityField':
+                    case D7EntityField::class:
                         $tabControl->AddD7EntityField($field->getName(), $field->getTitle(), $value,
                             $field->isRequired());
                         break;
-                    case 'Bitrix\Main\ORM\Fields\StringField':
+                    case StringField::class:
                     default:
                         $tabControl->AddEditField($field->getName(), $field->getTitle(), $field->isRequired(),
                             [], $value);
@@ -249,11 +258,21 @@ try {
         }
     }
 
-    if ($elementId > 0 && new $class instanceof Versioned) {
+
+    if ($elementId > 0 && class_exists($class) && (new $class instanceof Versioned)) {
         $tabControl->BeginNextFormTab();
         $tabControl->BeginCustomField('HISTORY', 'История изменений');
+
+        $versions = VersionTable::getList([
+            'filter' => [
+                '=ENTITY' => $class,
+                '=ELEMENT_ID' => $elementId
+            ],
+            'order' => ['DATE' => 'DESC']
+        ]);
+
         ?>
-        <p>123</p>
+        <p>История изменений: <?= $versions->getSelectedRowsCount(); ?></p>
         <?php
 
         $tabControl->EndCustomField('HISTORY');

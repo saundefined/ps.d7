@@ -34,10 +34,7 @@ class History
         $isChanged = false;
 
         foreach ($new as $id => $value) {
-            $newHash = $this->hashedValue($value);
-            $oldHash = $this->hashedValue($old[$id]);
-
-            if ($newHash !== $oldHash) {
+            if (sha1($value) !== sha1($old[$id])) {
                 $isChanged = true;
             }
         }
@@ -48,15 +45,12 @@ class History
             try {
                 VersionTable::add([
                     'ENTITY' => $this->entity,
+                    'ELEMENT_ID' => $this->elementId,
                     'USER_ID' => $userId,
                     'DATA' => $new
                 ]);
             } catch (\Exception $e) {
             }
         }
-    }
-
-    private function hashedValue($value) {
-        return sha1($value);
     }
 }

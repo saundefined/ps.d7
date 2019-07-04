@@ -117,13 +117,14 @@ class EntityTable extends DataManager
 use Bitrix\Main\EventResult;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\Event;
+use Ps\D7\Fields\D7EntityField;
 
 $event = EventManager::getInstance();
 $event->addEventHandler('ps.d7', 'onGetCustomFields', 'registerCustomField');
 
 function registerCustomField() {
     return [
-        'Ps\\D7\\Fields\\D7EntityField' => 'addEntityHandler'
+        D7EntityField::class => 'addEntityHandler'
     ];
 }
 
@@ -161,13 +162,14 @@ function addEntityHandler($tabControl, $field, $value) {
 use Bitrix\Main\EventResult;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\Event;
+use Bitrix\Main\ORM\Fields\DatetimeField;
 
 $event = EventManager::getInstance();
 $event->addEventHandler('ps.d7', 'registerCustomModifier', 'registerCustomModifierHandler');
 
 function registerCustomModifierHandler(Event $event) {
     $event->addResult(new EventResult(EventResult::SUCCESS, [
-        'ENTITY' => 'Bitrix\\Main\\ORM\\Fields\\DatetimeField',
+        'ENTITY' => DatetimeField::class,
         'HANDLER' => 'customDateTimeHandler',
     ]));
 

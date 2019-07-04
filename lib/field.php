@@ -6,6 +6,9 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
 use Bitrix\Main\ORM\Data\DataManager;
+use Bitrix\Main\ORM\Fields\BooleanField;
+use Bitrix\Main\ORM\Fields\DateField;
+use Bitrix\Main\ORM\Fields\DatetimeField;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
@@ -53,13 +56,13 @@ class Field
             $value = call_user_func($customEntity[$class], $value);
         } else {
             switch ($class) {
-                case 'Bitrix\Main\ORM\Fields\BooleanField':
+                case BooleanField::class:
                     $value = $value === 'Y';
                     break;
-                case 'Bitrix\Main\ORM\Fields\DateField':
+                case DateField::class:
                     $value = new Date($value);
                     break;
-                case 'Bitrix\Main\ORM\Fields\DatetimeField':
+                case DatetimeField::class:
                     $value = new DateTime($value);
                     break;
             }

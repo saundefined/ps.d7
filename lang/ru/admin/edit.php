@@ -13,3 +13,6 @@ $MESS['PS_D7_EDIT_SAVE_ERROR'] = 'Ошибка сохранения';
 $MESS['PS_D7_EDIT_ELEMENT_TAB'] = 'Элемент';
 $MESS['PS_D7_EDIT_ELEMENT_TITLE'] = 'Редактирование элемента';
 $MESS['PS_D7_EDIT_ERROR'] = 'Ошибка';
+$MESS['PS_D7_EDIT_VERSION_TIMESTAMP_X'] = 'Время изменения';
+$MESS['PS_D7_EDIT_VERSION_USER'] = 'Кто изменил';
+$MESS['PS_D7_EDIT_REVERT'] = 'Откатить изменения';

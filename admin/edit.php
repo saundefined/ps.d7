@@ -263,16 +263,77 @@ try {
         $tabControl->BeginNextFormTab();
         $tabControl->BeginCustomField('HISTORY', 'История изменений');
 
-        $versions = VersionTable::getList([
+        $tableId = 'tbl_' . mb_strtolower($entity->getCode()) . '_vcs';
+
+        $sort = new CAdminSorting($tableId, $entity->getAutoIncrement(), 'DESC');
+        $lAdmin = new CAdminUiList($tableId, $sort);
+
+        $headers = [];
+        foreach ($fields as $field) {
+            $headers[] = [
+                'id' => 'VERSION_TIMESTAMP_X',
+                'content' => Loc::getMessage('PS_D7_EDIT_VERSION_TIMESTAMP_X'),
+                'default' => true
+            ];
+            $headers[] = [
+                'id' => 'VERSION_USER',
+                'content' => Loc::getMessage('PS_D7_EDIT_VERSION_USER'),
+                'default' => true
+            ];
+
+            if ($field instanceof ScalarField) {
+                if (in_array($field->getName(), ['ID'], false)) {
+                    continue;
+                }
+
+                $headers[] = [
+                    'id' => $field->getName(),
+                    'content' => $field->getTitle(),
+                    'default' => true
+                ];
+            }
+        }
+
+        $lAdmin->AddHeaders($headers);
+
+        $res = VersionTable::getList([
+            'select' => ['*'],
             'filter' => [
                 '=ENTITY' => $class,
                 '=ELEMENT_ID' => $elementId
             ],
-            'order' => ['DATE' => 'DESC']
+            'order' => ['DATE' => 'DESC'],
+            'limit' => CAdminResult::GetNavSize($tableId),
         ]);
 
+        $res = new CAdminResult($res, $tableId);
+        $res->NavStart();
+
+        while ($ar = $res->Fetch()) {
+            $row =& $lAdmin->AddRow('ID', $ar);
+            $row->AddField('VERSION_TIMESTAMP_X', $ar['DATE']);
+            $row->AddField('VERSION_USER', $ar['USER_ID']);
+
+            $data = $ar['DATA'];
+            foreach ($data as $column => $value) {
+                $row->AddField($column, $value);
+            }
+
+            $actions = [];
+            $actions[] = [
+                'ICON' => 'edit',
+                'TEXT' => Loc::getMessage('PS_D7_EDIT_REVERT'),
+                'LINK' => '#',
+                'DEFAULT' => true
+            ];
+            $row->AddActions($actions);
+        }
         ?>
-        <p>История изменений: <?= $versions->getSelectedRowsCount(); ?></p>
+        <tr>
+            <td colspan="2">
+                <? $lAdmin->Display(); ?>
+            </td>
+        </tr>
         <?php
 
         $tabControl->EndCustomField('HISTORY');

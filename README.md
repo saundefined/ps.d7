@@ -44,14 +44,14 @@ function registerMyEntity() {
 
 Модуль по умолчанию поддерживает следующие поля:
 
-``Bitrix\Main\ORM\Fields\EnumField``
-``Bitrix\Main\ORM\Fields\BooleanField``
-``Bitrix\Main\ORM\Fields\DateField``
-``Bitrix\Main\ORM\Fields\DatetimeField``
-``Bitrix\Main\ORM\Fields\TextField``
-``Ps\D7\Fields\FileField``
-``Ps\D7\Fields\D7EntityField``
-``Bitrix\Main\ORM\Fields\StringField``
+- ``Bitrix\Main\ORM\Fields\EnumField``
+- ``Bitrix\Main\ORM\Fields\BooleanField``
+- ``Bitrix\Main\ORM\Fields\DateField``
+- ``Bitrix\Main\ORM\Fields\DatetimeField``
+- ``Bitrix\Main\ORM\Fields\TextField``
+- ``Ps\D7\Fields\FileField``
+- ``Ps\D7\Fields\D7EntityField``
+- ``Bitrix\Main\ORM\Fields\StringField``
 
 Иногда может потребоваться собственное поле, рассмотрим добавление кастомного поля на примере ``D7EntityField``
 

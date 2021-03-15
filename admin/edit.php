@@ -341,13 +341,13 @@ try {
 
 
     $tabControl->Buttons([
-        'disabled' => false,
-        'btnSaveAndAdd' => true,
-        'btnSave' => true,
-        'btnApply' => true,
-        'btnCancel' => true,
-        'back_url' => 'ps_d7_list.php?lang=' . LANGUAGE_ID . '&ENTITY_ID=' . $entityId,
-    ]);
+                             'disabled' => false,
+                             'btnSaveAndAdd' => true,
+                             'btnSave' => true,
+                             'btnApply' => true,
+                             'btnCancel' => true,
+                             'back_url' => 'ps_d7_admin.php?lang=' . LANGUAGE_ID . '&ENTITY_ID=' . $entityId,
+                         ]);
 
     $tabControl->Show();
 } catch (Exception $exception) {
